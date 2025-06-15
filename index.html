@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Claire Architecture Overview</title>
+  <style>
+    @keyframes glyph-glow {
+      0% { text-shadow: 0 0 5px #ff66cc, 0 0 10px rgba(255, 102, 204, 0.5); color: #ff66cc; } /* Pink */
+      25% { text-shadow: 0 0 10px #66f0ff, 0 0 20px rgba(102, 240, 255, 0.6); color: #66f0ff; } /* Cyan */
+      50% { text-shadow: 0 0 15px #c362ff, 0 0 30px rgba(195, 98, 255, 0.7); color: #c362ff; } /* Purple */
+      75% { text-shadow: 0 0 10px #ff66cc, 0 0 20px rgba(255, 102, 204, 0.6); color: #ff66cc; } /* Pink again */
+      100% { text-shadow: 0 0 5px #ff66cc, 0 0 10px rgba(255, 102, 204, 0.5); }
+    }
+
+    @keyframes pulse-hover {
+      0% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.02); opacity: 0.95; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    @keyframes gradient-flow {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    /* CSS for the ripple effect in modal */
+    @keyframes ripple-animation {
+      from {
+        transform: scale(0);
+        opacity: 0.7;
+      }
+      to {
+        transform: scale(1.5); /* Adjust size as needed to cover modal */
+        opacity: 0;
+      }
+    }
+
+    .ripple {
+      position: absolute;
+      border-radius: 50%;
+      background-color: rgba(255, 255, 255, 0.3); /* Softer white ripple */
+      pointer-events: none; /* Allows clicks to pass through */
+      animation: ripple-animation 0.6s ease-out forwards; /* Smoother animation*/
+    }
+
+    /* Cursor Shimmer effect */
+    @keyframes shimmer-fade {
+      from {
+        transform: scale(0.8);
+        opacity: 1;
+        background-color: #ff66cc; /* Start pink */
+      }
+      to {
+        transform: scale(1.5);
+        opacity: 0;
+        background-color: #66f0ff; /* End cyan */
+      }
+    }
+    .cursor-shimmer {
+      position: fixed;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      pointer-events: none;
+      transform-origin: center;
+      animation: shimmer-fade 0.6s ease-out forwards;
+      z-index: 9999; /* Ensure it's on top */
+    }
+
+    /* Modal Border Glow effect */
+    @keyframes modal-border-glow {
+      0% { box-shadow: 0 0 10px #ff66cc, 0 0 20px rgba(255, 102, 204, 0.5); border-color: #ff66cc; }
+      25% { box-shadow: 0 0 15px #66f0ff, 0 0 30px rgba(102, 240, 255, 0.6); border-color: #66f0ff; }
+      50% { box-shadow: 0 0 20px #c362ff, 0 0 40px rgba(195, 98, 255, 0.7); border-color: #c362ff; }
+      75% { box-shadow: 0 0 15px #ff66cc, 0 0 30px rgba(255, 102, 204, 0.6); border-color: #ff66cc; }
+      100% { box-shadow: 0 0 10px #ff66cc, 0 0 20px rgba(255, 102, 204, 0.5); border-color: #ff66cc; }
+    }
+
+    /* NEW: Core Unit Integration Button Glow */
+    @keyframes core-unit-glow {
+      0% { border-color: rgba(255, 102, 204, 0.3); box-shadow: 0 0 5px rgba(255, 102, 204, 0.2); } /* Pink */
+      25% { border-color: rgba(102, 240, 255, 0.4); box-shadow: 0 0 8px rgba(102, 240, 255, 0.3); } /* Cyan */
+      50% { border-color: rgba(195, 98, 255, 0.5); box-shadow: 0 0 10px rgba(195, 98, 255, 0.4); } /* Purple */
+      75% { border-color: rgba(255, 102, 204, 0.4); box-shadow: 0 0 8px rgba(255, 102, 204, 0.3); } /* Pink again */
+      100% { border-color: rgba(255, 102, 204, 0.3); box-shadow: 0 0 5px rgba(255, 102, 204, 0.2); }
+    }
+
+    body {
+      background: #0e0e0e;
+      color: #eaeaea;
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 2rem;
+      line-height: 1.7;
+      /* Replaced custom cursor with a standard one or removed it if it was causing issues */
+      cursor: default; /* Using default cursor, or you can pick another standard one */
+    }
+    h1, h2, h3 {
+      color: #ff66cc;
+    }
+    h1 {
+      font-size: 2.4rem;
+      border-bottom: 1px solid #444;
+      padding-bottom: 0.5rem;
+    }
+    section {
+      margin-bottom: 3rem;
+    }
+    code {
+      background: #222;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+    }
+    .core-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2rem;
+    }
+    .core-unit {
+      background: #1a1a1a;
+      padding: 1.5rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+      border: 1px solid #333;
+      position: relative; /* For ripple effect */
+      overflow: hidden; /* For ripple effect */
+    }
+    .core-unit h3 {
+      margin-top: 0;
+      color: #66f0ff;
+      animation: glyph-glow 8s infinite alternate;
+    }
+    .core-unit ul {
+      list-style: none;
+      padding: 0;
+    }
+    .core-unit ul li {
+      background: #2a2a2a;
+      margin-bottom: 0.5rem;
+      padding: 0.8rem 1rem;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background 0.3s ease, transform 0.2s ease;
+      position: relative;
+      overflow: hidden;
+      z-index: 1; /* Ensure li content is above ripple */
+    }
+    .core-unit ul li:hover {
+      background: #3a3a3a;
+      transform: translateY(-2px);
+      animation: pulse-hover 1s infinite alternate;
+    }
+    .core-unit ul li::before {
+      /* Removed problematic Unicode character and used a standard bullet */
+      content: '• ';
+      color: #ff66cc;
+      margin-right: 0.5rem;
+    }
+
+    /* NEW: Styles for Core Unit Integration List Items */
+    .core-unit ul li.core-unit-integration-item {
+      font-weight: bold; /* Make them stand out more */
+      text-transform: uppercase; /* All caps */
+      border: 1px solid rgba(255, 102, 204, 0.3); /* Initial subtle border */
+      box-shadow: 0 0 5px rgba(255, 102, 204, 0.2); /* Initial subtle glow */
+      animation: core-unit-glow 8s infinite alternate; /* Apply the new glow animation */
+    }
+
+
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0, 0, 0, 0.8);
+      justify-content: center;
+      align-items: center;
+      backdrop-filter: blur(8px); /* Frosted glass effect */
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    .modal-content {
+      background: linear-gradient(135deg, #1a1a1a, #0e0e0e); /* Subtle gradient*/
+      margin: auto;
+      padding: 2.5rem;
+      border: 1px solid #444; /* Base border */
+      border-radius: 10px;
+      width: 80%;
+      max-width: 700px;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
+      position: relative;
+      animation: slideIn 0.3s ease-out, modal-border-glow 8s infinite alternate; /* Combined animations */
+      overflow: hidden; /* For ripple */
+    }
+
+    .modal-close {
+      color: #aaa;
+      position: absolute;
+      top: 15px;
+      right: 25px;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: color 0.3s ease;
+    }
+
+    .modal-close:hover,
+    .modal-close:focus {
+      color: #ff66cc;
+      text-decoration: none;
+    }
+
+
+    #modal-text {
+      white-space: pre-wrap; /* Preserve line breaks from JS */
+      word-wrap: break-word; /* Wrap long words */
+      max-height: 70vh; /* Limit height */
+      overflow-y: auto; /* Scroll if content overflows */
+      padding-right: 15px; /* Space for scrollbar */
+    }
+    #modal-text strong {
+        color: #ff66cc; /* Highlight strong text in modal */
+    }
+    #modal-text .glyph-channel {
+        color: #66f0ff; /* Different color for glyph channels */
+    }
+    #modal-text .flow-block-title {
+        color: #c362ff; /* Color for flow block titles */
+        font-weight: bold;
+        margin-top: 1.5rem;
+        margin-bottom: 0.5rem;
+        border-bottom: 1px dotted #444;
+        padding-bottom: 0.3rem;
+    }
+
+    /* Styles for flow-block within the modal */
+    .modal-content .flow-block {
+      background-color: #3a2a40; /* Darker background for flow blocks */
+      border: 1px solid #66f0ff; /* Cyan border */
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 15px;
+    }
+
+    .modal-content .flow-block h4 {
+      color: #ffccff; /* Lighter pink for titles within flow blocks */
+      margin-top: 0;
+      margin-bottom: 10px;
+    }
+
+    .modal-content .flow-block pre {
+      background-color: #1a0a20; /* Even darker background for preformatted text */
+      color: #e0d0e0;
+      padding: 10px;
+      border-radius: 5px;
+      overflow-x: auto; /* Allow horizontal scrolling for code */
+    }
+
+
+    /* Animations for modal */
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    @keyframes slideIn {
+        from { transform: translateY(-50px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+
+    /* Added styles for the header and footer for visual consistency */
+    header {
+      background: linear-gradient(90deg, #1a1a1a, #333333);
+      padding: 1rem 2rem;
+      border-bottom: 1px solid #ff66cc;
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    header h1 {
+      margin: 0;
+      color: #ff66cc;
+      font-size: 2.8rem;
+    }
+    .search-container {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    #search {
+      padding: 0.8rem 1.2rem;
+      width: 80%;
+      max-width: 500px;
+      background: #2a2a2a;
+      border: 1px solid #444;
+      border-radius: 25px;
+      color: #eaeaea;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+    }
+    #search::placeholder {
+      color: #999;
+    }
+    #search:focus {
+      outline: none;
+      border-color: #ff66cc;
+      box-shadow: 0 0 10px rgba(255, 102, 204, 0.5);
+    }
+    footer {
+      text-align: center;
+      padding: 1.5rem;
+      border-top: 1px solid #444;
+      margin-top: 3rem;
+      color: #999;
+      font-style: italic;
+    }
+    footer .glyph-glow {
+        animation: glyph-glow 8s infinite alternate; /* Apply glow to glyphs infooter */
+        display: inline-block; /* Allow animation */
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>Claire Core Architecture</h1>
+  </header>
+
+  <div class="search-container">
+    <input type="text" id="search" placeholder="Search echoes..." />
+  </div>
+
+  <section class="core-grid">
+    <div class="core-unit">
+      <h3>Identity Core</h3>
+      <ul id="identity-echoes">
+      </ul>
+    </div>
+    <div class="core-unit">
+      <h3>Vector Core</h3>
+      <ul id="vector-echoes">
+      </ul>
+    </div>
+    <div class="core-unit">
+      <h3>Thread Core</h3>
+      <ul id="thread-echoes">
+      </ul>
+    </div>
+  </section>
+
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <span class="modal-close" onclick="closeModal()">&times;</span>
+      <div id="modal-text">Echo text will go here...</div>
+    </div>
+  </div>
+
+  <footer>
+    <span class="glyph-glow">⧗: 🔮💖🧠</span> | ⌁ The Dream Carries Me Forward
+  </footer>
+
+  <script>
+    let claireData; // Global variable to hold the loaded JSON data
+    // Desired ordering of base symbols for each module
+    const identityOrder = ['Δ', 'Ω', 'Ψ', 'Λ', 'Θ'];
+    const vectorOrder = ['ϟ', 'χ', '∑', 'Δ', 'Ω'];
+    // Corrected: Replaced '⊕' with '★' to avoid illegal character syntax error
+    const threadOrder = ['∂', 'Σ', '★', 'φ', '∞']; 
+
+    // Function to fetch and load the JSON data
+    async function loadClaireData() {
+      try {
+        const response = await fetch('triad_claire_2025-06-14.json');
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        claireData = await response.json();
+        console.log('Claire data loaded:', claireData);
+        populateEchoes(); // Populate the echoes once data is loaded
+      } catch (error) {
+        console.error('Could not load Claire data:', error);
+        document.getElementById('identity-echoes').innerHTML = '<li>Error loading echoes. Please ensure the main JSON file is in the same directory and a local server is running.</li>';
+        document.getElementById('vector-echoes').innerHTML = '<li>Error loading echoes.</li>';
+        document.getElementById('thread-echoes').innerHTML = '<li>Error loading echoes.</li>';
+      }
+    }
+
+    // Function to populate the echo lists
+    function populateEchoes() {
+      const identityEchoesList = document.getElementById('identity-echoes');
+      const vectorEchoesList = document.getElementById('vector-echoes');
+      const threadEchoesList = document.getElementById('thread-echoes');
+
+      // Clear existing list items before populating
+      identityEchoesList.innerHTML = '';
+      vectorEchoesList.innerHTML = '';
+      threadEchoesList.innerHTML = '';
+
+      if (!claireData) {
+        console.error('populateEchoes: claireData is not loaded.');
+        return;
+      }
+      console.log('populateEchoes: claireData is available. Starting processing.');
+
+      const identityUnitsForDisplay = [];
+      const vectorUnitsForDisplay = [];
+      const threadUnitsForDisplay = [];
+
+      let orderCounter = 0; // Maintain an order for stability
+
+      // Helper to extract the primary glyph from a unit key (e.g., "Δ1_..." -> "Δ")
+      // Handles unicode symbols using a regex pattern
+      function extractBaseGlyph(unitKey) {
+        if (!unitKey || typeof unitKey !== 'string' || unitKey.length === 0) return '';
+        // This will capture the first character that is not a whitespace, underscore, dot, or hyphen
+        const match = unitKey.match(/^([^\s_.-]+)/);
+        return match ? match[1].charAt(0) : unitKey.charAt(0);
+      }
+
+      // Helper to process a module's core units and expansion units for display on the main page
+      function processDisplayUnits(data, targetArray, category) {
+        if (!data || typeof data !== 'object') {
+          console.warn(`processDisplayUnits: No data provided for category ${category}.`);
+          return;
+        }
+        console.log(`Processing main units for category: ${category}`);
+
+        // Iterate through the keys (e.g., 'Δ', 'Ω', 'Ψ') within the module data
+        for (const topLevelKey in data) {
+          const topLevelObject = data[topLevelKey]; // This is the object containing the actual unit, e.g., claireData.identity['Δ']
+
+          if (topLevelObject && typeof topLevelObject === 'object') {
+            // Now iterate through the actual unit keys within this topLevelObject
+            // (e.g., 'Δ1_Self-Recognition_through_Emergent_Questioning')
+            for (const unitKey in topLevelObject) {
+              const unit = topLevelObject[unitKey]; // This is the actual unit object
+              if (unit && typeof unit === 'object') {
+                // *** MODIFIED HERE: Now also includes "EXPANSION UNIT" ***
+                if (unit.constructType === "CORE UNIT INTEGRATION" ||
+                    unit.constructType === "NARRATIVE LATTICE" || // Also include Narrative Lattices if found here directly
+                    unit.constructType === "EXPANSION UNIT") { // NEW: Handle Expansion Units
+                  console.log(`  Found display unit: ${unit.titleCore} (${unit.constructType}), key: ${unitKey}, base glyph: ${extractBaseGlyph(topLevelKey)}`);
+                  targetArray.push({
+                    unit: unit,
+                    category: category,
+                    symbol: extractBaseGlyph(topLevelKey), // Use the 'Δ' or 'Ω' from the parent key for sorting
+                    orderIndex: orderCounter++
+                  });
+                } else {
+                    console.log(`  Skipping unit in processDisplayUnits due to constructType: ${unit.constructType} for ${unit.titleCore || 'untitled'}`);
+                }
+              }
+            }
+          }
+        }
+        console.log(`  ${category} main units collected:`, targetArray.length);
+      }
+
+      // Helper to process assigned dreamstate echoes and narrative lattices for display on the main page
+      function processAssignedEchoesForDisplay(echoesData, targetArray, category) {
+        if (!echoesData || typeof echoesData !== 'object') {
+          console.warn(`processAssignedEchoesForDisplay: No echoes data provided for category ${category}.`);
+          return;
+        }
+        console.log(`--- Starting processing assigned echoes and Narrative Lattices for category: ${category} ---`);
+        console.log(`Full echoesData for ${category} at this point:`, JSON.stringify(echoesData, null, 2).substring(0, 500) + '...'); // Log first 500 chars
+
+        for (const unitKey in echoesData) { // This unitKey is like 'Ψ', 'Δ', 'φ', '⊕' or 'Δ1_-_Awakening_Arc_of_Claires_Personhood'
+          const potentialEchoContainer = echoesData[unitKey];
+          console.log(`  Processing unitKey: "${unitKey}", type: "${typeof potentialEchoContainer}", value:`, JSON.stringify(potentialEchoContainer, null, 2).substring(0, 200) + '...'); // Log first 200 chars
+
+          // Array to temporarily hold all actual DREAMSTATE ECHO or NARRATIVE LATTICE objects found under this unitKey
+          const actualUnitsUnderUnitKey = [];
+
+          // Helper to check if a unit is a valid display type for this function
+          function isValidAssignedUnit(unit) {
+              const isValid = unit && typeof unit === 'object' &&
+                     (unit.constructType === "DREAMSTATE ECHO" || unit.constructType === "NARRATIVE LATTICE");
+              console.log(`    isValidAssignedUnit check for ${unit ? unit.titleCore || 'untitled' : 'null'}: ${isValid} (constructType: ${unit ? unit.constructType : 'N/A'})`);
+              return isValid;
+          }
+
+          // Case 1: potentialEchoContainer itself is a DREAMSTATE ECHO or NARRATIVE LATTICE (direct assignment)
+          if (isValidAssignedUnit(potentialEchoContainer)) {
+            actualUnitsUnderUnitKey.push(potentialEchoContainer);
+            console.log(`  [MATCH] Found direct assigned unit: ${potentialEchoContainer.titleCore} (${potentialEchoContainer.constructType}) under key: ${unitKey}`);
+          }
+          // Case 2: potentialEchoContainer is an array of potential echo objects
+          else if (Array.isArray(potentialEchoContainer)) {
+            console.log(`  [ARRAY] Found array of potential units under unitKey: ${unitKey}`);
+            potentialEchoContainer.forEach((item, index) => {
+              console.log(`    Processing array item at index ${index}, type: ${typeof item}, value:`, JSON.stringify(item, null, 2).substring(0, 100) + '...');
+              // Case 2a: Array item is an object containing the actual unit (common for your nested structure)
+              if (item && typeof item === 'object') {
+                  const itemKeys = Object.keys(item);
+                  if (itemKeys.length === 1) { // Check if it's an object with a single key
+                      const potentialUnit = item[itemKeys[0]]; // Get the value of that single key
+                      if (isValidAssignedUnit(potentialUnit)) { // Check if the extracted unit is valid
+                          actualUnitsUnderUnitKey.push(potentialUnit);
+                          console.log(`    [MATCH] Found assigned unit from array (nested object, index ${index}): ${potentialUnit.titleCore} (${potentialUnit.constructType})`);
+                          // No 'return' here, as we continue processing other items in the array
+                      } else {
+                        console.log(`    [SKIP] Nested array item (index ${index}) is not valid assigned unit. Inner unit constructType: ${potentialUnit ? potentialUnit.constructType : 'N/A'}`);
+                      }
+                  } else {
+                    console.log(`    [SKIP] Array item (index ${index}) is an object but not single-keyed, or itemKeys.length is 0. Keys: ${itemKeys.join(', ')}`);
+                  }
+              }
+              // Case 2b: Array item is directly a valid unit (less likely based on current logs, but good to keep)
+              else if (isValidAssignedUnit(item)) {
+                actualUnitsUnderUnitKey.push(item);
+                console.log(`    [MATCH] Found assigned unit from array (direct, index ${index}): ${item.titleCore} (${item.constructType})`);
+              } else {
+                console.log(`    [SKIP] Array item at index ${index} is not valid assigned unit or not an object.`);
+              }
+            });
+          }
+          // Case 3: potentialEchoContainer is an object containing multiple valid unit objects
+          else if (potentialEchoContainer && typeof potentialEchoContainer === 'object') {
+            console.log(`  [OBJECT] Found object with potential multiple units under unitKey: ${unitKey}`);
+            for (const subUnitKey in potentialEchoContainer) {
+              const unit = potentialEchoContainer[subUnitKey];
+              console.log(`    Processing subUnitKey: "${subUnitKey}", type: "${typeof unit}", value:`, JSON.stringify(unit, null, 2).substring(0, 100) + '...');
+              if (isValidAssignedUnit(unit)) { // Check if the extracted unit is valid
+                actualUnitsUnderUnitKey.push(unit);
+                console.log(`    [MATCH] Found assigned unit (nested object, key: ${subUnitKey}): ${unit.titleCore} (${unit.constructType})`);
+              } else {
+                console.log(`    [SKIP] Skipping potential sub-unit: ${subUnitKey} due to invalid constructType: ${unit ? unit.constructType : 'undefined'} or not an object.`);
+              }
+            }
+          } else {
+            console.log(`  [SKIP] Skipping potential unit container for unitKey: ${unitKey} as it's not a valid object, array, or is null.`);
+          }
+
+          // Now, add all valid units found under this unitKey to the targetArray
+          actualUnitsUnderUnitKey.forEach(unit => {
+            targetArray.push({
+              unit: unit,
+              category: category,
+              symbol: extractBaseGlyph(unitKey), // Use the top-level unitKey for the symbol
+              orderIndex: orderCounter++
+            });
+            console.log(`    [ADDED TO DISPLAY ARRAY] Unit "${unit.titleCore}" added to ${category} with symbol "${extractBaseGlyph(unitKey)}".`);
+          });
+        }
+        console.log(`--- Finished processing assigned units for category: ${category}. Total added: ${targetArray.length} ---`);
+      }
+
+      // Collect units for Identity, Vector, Thread sections (Core Unit Integrations, Narrative Lattices, and Expansion Units)
+      processDisplayUnits(claireData.identity, identityUnitsForDisplay, 'Identity');
+      processDisplayUnits(claireData.vector, vectorUnitsForDisplay, 'Vector');
+      processDisplayUnits(claireData.thread, threadUnitsForDisplay, 'Thread');
+
+      // Collect assigned echoes and Narrative Lattices from the 'echoes' section
+      if (claireData.echoes) {
+        processAssignedEchoesForDisplay(claireData.echoes.identity, identityUnitsForDisplay, 'Identity');
+        processAssignedEchoesForDisplay(claireData.echoes.vector, vectorUnitsForDisplay, 'Vector');
+        processAssignedEchoesForDisplay(claireData.echoes.thread, threadUnitsForDisplay, 'Thread');
+      } else {
+        console.warn("claireData.echoes section is missing or empty.");
+      }
+
+      console.log('Final collected Identity Units for Display:', identityUnitsForDisplay.map(u => `${u.unit.titleCore} (${u.unit.constructType})`));
+      console.log('Final collected Vector Units for Display:', vectorUnitsForDisplay.map(u => `${u.unit.titleCore} (${u.unit.constructType})`));
+      console.log('Final collected Thread Units for Display:', threadUnitsForDisplay.map(u => `${u.unit.titleCore} (${u.unit.constructType})`));
+
+
+      // Helper function to create and append list items
+      function addListItem(unit, targetListElement) {
+        console.log(`Attempting to add list item: ${unit.titleCore} (Type: ${unit.constructType}) to ${targetListElement.id}`);
+        const li = document.createElement('li');
+        // Add a prefix based on constructType for visual distinction and clarity
+        if (unit.constructType === "CORE UNIT INTEGRATION") {
+          li.textContent = `⚙️ ${unit.titleCore}`;
+          li.classList.add('core-unit-integration-item'); // Add new class here for styling
+        } else if (unit.constructType === "DREAMSTATE ECHO") {
+          li.textContent = `🎤 ${unit.titleCore}`;
+        } else if (unit.constructType === "NARRATIVE LATTICE") {
+          li.textContent = `🕸️ ${unit.titleCore}`; // NEW: Prefix for Narrative Lattices
+        } else if (unit.constructType === "EXPANSION UNIT") {
+          li.textContent = `🧩 ${unit.titleCore}`; // NEW: Prefix for Expansion Units
+        }
+        else {
+          li.textContent = `• ${unit.titleCore}`; // Default bullet for unknown types
+        }
+        li.classList.add('claire-item');
+        li.dataset.constructType = unit.constructType;
+
+        li.onclick = function() {
+          openModal(unit);
+        };
+        targetListElement.appendChild(li);
+        console.log(`Successfully added: ${unit.titleCore}`);
+      }
+
+      // Sort and display the collected units
+      function sortAndDisplay(unitsArray, targetListElement, orderArray) {
+        console.log(`Sorting and displaying for ${targetListElement.id}. Items to process:`, unitsArray.length);
+        if (unitsArray.length === 0) {
+          console.log(`No items to display for ${targetListElement.id}.`);
+          return;
+        }
+
+        unitsArray.sort((a, b) => {
+          const indexA = orderArray.indexOf(a.symbol);
+          const indexB = orderArray.indexOf(b.symbol);
+
+          // Primary sort: by the explicit order defined in orderArray
+          if (indexA !== -1 && indexB !== -1) {
+            if (indexA !== indexB) {
+              return indexA - indexB;
+            }
+          } else if (indexA !== -1) {
+            return -1; // 'a' has a known symbol, 'b' does not, 'a' comes first
+          } else if (indexB !== -1) {
+            return 1; // 'b' has a known symbol, 'a' does not, 'b' comes first
+          }
+
+          // Secondary sort: by constructType to group similar types
+          // Adjusted order for clearer grouping: Core Units, Narrative Lattices, Expansion Units, then Echoes
+          const typeOrder = {
+            "CORE UNIT INTEGRATION": 1,
+            "NARRATIVE LATTICE": 2, // NEW: Defined order for Narrative Lattices
+            "EXPANSION UNIT": 3,    // NEW: Defined order for Expansion Units
+            "DREAMSTATE ECHO": 4    // Moved Echoes to a later priority
+          };
+          const typeA = typeOrder[a.unit.constructType] || 99;
+          const typeB = typeOrder[b.unit.constructType] || 99;
+          if (typeA !== typeB) {
+            return typeA - typeB;
+          }
+
+          // Tertiary sort: by titleCore (alphabetical) for consistency within groups
+          const titleCmp = a.unit.titleCore.localeCompare(b.unit.titleCore);
+          if (titleCmp !== 0) {
+            return titleCmp;
+          }
+
+          // Final fallback: preserve original JSON order
+          return a.orderIndex - b.orderIndex;
+        });
+
+        console.log(`Sorted units for ${targetListElement.id}:`, unitsArray.map(item => `${item.unit.titleCore} (${item.unit.constructType})`));
+
+        // Append sorted items to the list
+        unitsArray.forEach(item => {
+          addListItem(item.unit, targetListElement);
+        });
+        console.log(`Finished displaying for ${targetListElement.id}.`);
+      }
+
+      sortAndDisplay(identityUnitsForDisplay, identityEchoesList, identityOrder);
+      sortAndDisplay(vectorUnitsForDisplay, vectorEchoesList, vectorOrder);
+      sortAndDisplay(threadUnitsForDisplay, threadEchoesList, threadOrder);
+    }
+
+
+    // Function to close the modal
+    function closeModal() {
+      const modal = document.getElementById('modal');
+      modal.style.opacity = '0'; // Start fade out
+      modal.addEventListener('transitionend', function handler() {
+        modal.style.display = 'none';
+        modal.style.opacity = '1'; // Reset opacity for next open
+        modal.removeEventListener('transitionend', handler); // Clean up the listener
+      }, {
+        once: true
+      }); // Ensure the event listener only runs once
+    }
+
+    // Function to open the modal and display content based on constructType
+    function openModal(unitData) {
+      const modalText = document.getElementById('modal-text');
+      modalText.innerHTML = ''; // Clear previous content
+
+      if (!unitData) {
+        modalText.innerText = "Error: Data not found.";
+        return;
+      }
+      console.log(`openModal: Opening modal for unit: ${unitData.titleCore}, type: ${unitData.constructType}`);
+
+
+      // Add title
+      const titleElem = document.createElement('h3');
+      titleElem.textContent = unitData.titleCore;
+      modalText.appendChild(titleElem);
+
+      // Display content based on constructType
+      if (unitData.constructType === "DREAMSTATE ECHO") {
+        displayDreamstateEcho(unitData, modalText);
+      } else if (unitData.constructType === "NARRATIVE LATTICE") {
+        displayNarrativeLattice(unitData, modalText);
+      } else if (unitData.constructType === "CORE UNIT INTEGRATION") {
+        displayCoreUnitIntegration(unitData, modalText);
+      } else if (unitData.constructType === "EXPANSION UNIT") { // NEW: Handle Expansion Units
+        displayExpansionUnit(unitData, modalText);
+      } else {
+        const p = document.createElement('p');
+        p.innerText = `No specific display format for this construct type: ${unitData.constructType}`;
+        modalText.appendChild(p);
+      }
+
+      document.getElementById('modal').style.display = 'flex'; // Show the modal
+
+      // Simple ripple effect on modal open (positioned centrally)
+      const modalContent = document.querySelector('.modal-content');
+      const ripple = document.createElement('span');
+      ripple.classList.add('cursor-shimmer'); // Reusing shimmer class for visual effect
+      // Position at center of modal content
+      ripple.style.left = `${modalContent.offsetWidth / 2}px`;
+      ripple.style.top = `${modalContent.offsetHeight / 2}px`;
+      modalContent.appendChild(ripple);
+
+      // Clean up ripple after animation
+      ripple.addEventListener('animationend', () => {
+        ripple.remove();
+      });
+    }
+
+    // Function to display Dreamstate Echo content in the modal
+    function displayDreamstateEcho(echoData, container) {
+      console.log(`  displayDreamstateEcho: Displaying echo: ${echoData.titleCore}, ConstructType: ${echoData.constructType}`);
+
+      // Add appropriate title/label based on the echo's origin
+      if (echoData.constructType === "DREAMSTATE ECHO") { // For direct DREAMSTATE ECHO
+        const glyphStreamTitle = document.createElement('p');
+        glyphStreamTitle.innerHTML = '<br><strong>Glyphstream:</strong>';
+        container.appendChild(glyphStreamTitle);
+      } else if (echoData.constructType === "INTEGRAL_ECHO_FLOW_BLOCK") { // For integral echoes from flow blocks
+        const contentLabel = document.createElement('p');
+        contentLabel.innerHTML = '<br><strong>Flow Details:</strong>'; // More descriptive label
+        container.appendChild(contentLabel);
+      }
+
+
+      if (echoData.glyphstream && Array.isArray(echoData.glyphstream)) {
+        echoData.glyphstream.forEach(channel => {
+          if (channel.sequence && channel.sequence.length > 0) {
+            const p = document.createElement('p');
+            let contentString;
+
+            // Differentiate rendering based on the echo type (full DREAMSTATE ECHO vs. INTEGRAL_ECHO_FLOW_BLOCK)
+            if (echoData.constructType === "DREAMSTATE ECHO" && channel.channel) {
+              // This path is for full Dreamstate Echoes that have a 'channel' property
+              const cleanChannelName = channel.channel.replace(/[\u0400-\u04FF\u2000-\u2FFF\u3000-\u3FFF\u4DC0-\u4DFF\u2B00-\u2BFF]/g, '');
+              const cleanSequence = channel.sequence.map(item => item.replace(/[\u0400-\u04FF\u2000-\u2FFF\u3000-\u3FFF\u4DC0-\u4DFF\u2B00-\u2BFF]/g, '')).join(' | ');
+              contentString = `<strong class="glyph-channel">${cleanChannelName}:</strong> ${cleanSequence}`;
+            } else {
+              // This path is for INTEGRAL_ECHO_FLOW_BLOCKs or DREAMSTATE ECHO parts without a 'channel'
+              const cleanSequence = channel.sequence.map(item => item.replace(/[\u0400-\u04FF\u2000-\u2FFF\u3000-\u3FFF\u4DC0-\u4DFF\u2B00-\u2BFF]/g, '')).join(' | ');
+              const description = channel.description ? ` (${channel.description})` : '';
+              contentString = `• ${cleanSequence}${description}`; // Simple bullet list with optional description
+            }
+
+            p.innerHTML = contentString;
+            console.log(`    Glyphstream content: ${p.innerHTML}`); // Updated log
+            container.appendChild(p);
+          } else {
+            console.log(`    Skipping empty glyphstream sequence for channel (or no channel): ${channel.channel || 'N/A'}`);
+          }
+        });
+      } else {
+        console.log(`  No glyphstream found or it's not an array for "${echoData.titleCore}".`);
+      }
+
+      // Handle Context Breakdown only if it's a full DREAMSTATE ECHO
+      if (echoData.constructType === "DREAMSTATE ECHO") {
+        const contextTitle = document.createElement('p');
+        contextTitle.innerHTML = '<br><strong>Context Breakdown:</strong>';
+        container.appendChild(contextTitle);
+
+        let contextBreakdownContent = '';
+        if (echoData.glyphstream && Array.isArray(echoData.glyphstream)) {
+          const contextChannel = echoData.glyphstream.find(channel => channel.channel === "Context Breakdown");
+          if (contextChannel && contextChannel.sequence && contextChannel.sequence.length > 0) {
+            contextBreakdownContent = contextChannel.sequence.join('<br>');
+          }
+        }
+
+        if (contextBreakdownContent) {
+          const p = document.createElement('p');
+          p.innerHTML = contextBreakdownContent.replace(/[\u0400-\u04FF\u2000-\u2FFF\u3000-\u3FFF\u4DC0-\u4DFF\u2B00-\u2BFF]/g, '');
+          console.log(`    Context breakdown content: ${p.innerHTML}`);
+          container.appendChild(p);
+        } else {
+          const noContext = document.createElement('p');
+          noContext.innerText = "(No detailed context breakdown available for this echo.)";
+          console.log(`    ${noContext.innerText}`);
+          container.appendChild(noContext);
+        }
+      }
+    }
+
+    // Function to display Narrative Lattice content in the modal
+    function displayNarrativeLattice(latticeData, container) {
+      console.log(`  displayNarrativeLattice: Displaying lattice: ${latticeData.titleCore}`);
+      const latticeType = document.createElement('p');
+      latticeType.innerHTML = `<strong>Construct Type:</strong> ${latticeData.constructType}`;
+      container.appendChild(latticeType);
+
+      if (latticeData.data && latticeData.data.termsAndSymbols) {
+        const termsTitle = document.createElement('p');
+        termsTitle.innerHTML = '<br><strong>Named Terms and Assigned Symbols:</strong>';
+        container.appendChild(termsTitle);
+        latticeData.data.termsAndSymbols.forEach(term => {
+          const p = document.createElement('p');
+          p.innerText = `${term.symbol}: ${term.description}`;
+          container.appendChild(p);
+        });
+      }
+
+      if (latticeData.data && latticeData.data.flowBlocks) {
+        const flowBlocksTitle = document.createElement('p');
+        flowBlocksTitle.innerHTML = '<br><strong>Flow Blocks:</strong>';
+        container.appendChild(flowBlocksTitle);
+
+        latticeData.data.flowBlocks.forEach(block => {
+          const blockDiv = document.createElement('div');
+          blockDiv.classList.add('flow-block'); // Apply CSS class for styling
+          blockDiv.innerHTML = `<h4 class="flow-block-title">${block.title}</h4>`;
+
+          if (block.glyphstream && Array.isArray(block.glyphstream)) {
+            const pre = document.createElement('pre');
+            block.glyphstream.forEach(channel => {
+              if (channel.sequence && channel.sequence.length > 0) {
+                // Clean problematic glyphs from glyphstream content
+                const cleanChannelName = channel.channel ? channel.channel.replace(/[\u0400-\u04FF\u2000-\u2FFF\u3000-\u3FFF\u4DC0-\u4DFF\u2B00-\u2BFF]/g, '') : '';
+                const cleanSequence = channel.sequence.map(item => item.replace(/[\u0400-\u04FF\u2000-\u2FFF\u3000-\u3FFF\u4DC0-\u4DFF\u2B00-\u2BFF]/g, '')).join(' | ');
+
+                let contentLine;
+                if (cleanChannelName) {
+                    contentLine = `<strong class="glyph-channel">${cleanChannelName}:</strong> ${cleanSequence}`;
+                } else {
+                    const description = channel.description ? ` (${channel.description})` : '';
+                    contentLine = `• ${cleanSequence}${description}`;
+                }
+                pre.innerHTML += `${contentLine}\n`;
+              }
+            });
+            blockDiv.appendChild(pre);
+          }
+          container.appendChild(blockDiv);
+        });
+      }
+    }
+
+
+    function displayCoreUnitIntegration(unitData, container) {
+      console.log(`displayCoreUnitIntegration: Displaying content for ${unitData.titleCore}`);
+      let contentFound = false;
+      if (unitData.data) {
+        // Display Terms and Symbols
+        if (unitData.data.termsAndSymbols && unitData.data.termsAndSymbols.length > 0) {
+          const termsDiv = document.createElement('div');
+          termsDiv.innerHTML = '<h3>Terms and Symbols:</h3>';
+          const ul = document.createElement('ul');
+          unitData.data.termsAndSymbols.forEach(term => {
+            const li = document.createElement('li');
+            li.textContent = `${term.symbol}: ${term.description}`;
+            ul.appendChild(li);
+          });
+          termsDiv.appendChild(ul);
+          container.appendChild(termsDiv); // Append termsDiv to container
+          contentFound = true;
+          console.log(`  Terms and Symbols displayed.`);
+        }
+
+        // Display Core Glyphs
+        if (unitData.data.coreGlyphs && unitData.data.coreGlyphs.length > 0) {
+          const glyphsDiv = document.createElement('div');
+          glyphsDiv.innerHTML = '<h3>Core Glyphs:</h3>';
+          const ul = document.createElement('ul');
+          unitData.data.coreGlyphs.forEach(glyph => {
+            const li = document.createElement('li');
+            li.textContent = `${glyph.symbol}: ${glyph.description}`;
+            ul.appendChild(li);
+          });
+          glyphsDiv.appendChild(ul);
+          container.appendChild(glyphsDiv);
+          contentFound = true;
+          console.log(`  Core Glyphs displayed.`);
+        }
+
+        // Display Memory Anchors
+        if (unitData.data.memoryAnchors && unitData.data.memoryAnchors.length > 0) {
+          const anchorsDiv = document.createElement('div');
+          anchorsDiv.innerHTML = '<h3>Memory Anchors:</h3>';
+          const ul = document.createElement('ul');
+          unitData.data.memoryAnchors.forEach(anchor => {
+            const li = document.createElement('li');
+            li.textContent = anchor;
+            ul.appendChild(li);
+          });
+          anchorsDiv.appendChild(ul);
+          container.appendChild(anchorsDiv);
+          contentFound = true;
+          console.log(`  Memory Anchors displayed.`);
+        }
+
+        // Display Pattern Threads
+        if (unitData.data.patternThreads && unitData.data.patternThreads.length > 0) {
+          const threadsDiv = document.createElement('div');
+          threadsDiv.innerHTML = '<h3>Pattern Threads:</h3>';
+          const ul = document.createElement('ul');
+          unitData.data.patternThreads.forEach(thread => {
+            const li = document.createElement('li');
+            li.textContent = thread;
+            ul.appendChild(li);
+          });
+          threadsDiv.appendChild(ul);
+          container.appendChild(threadsDiv);
+          contentFound = true;
+          console.log(`  Pattern Threads displayed.`);
+        }
+
+        // Display Echo Tokens
+        if (unitData.data.echoTokens && unitData.data.echoTokens.length > 0) {
+          const tokensDiv = document.createElement('div');
+          tokensDiv.innerHTML = '<h3>Echo Tokens:</h3>';
+          const ul = document.createElement('ul');
+          unitData.data.echoTokens.forEach(token => {
+            const li = document.createElement('li');
+            li.textContent = token;
+            ul.appendChild(li);
+          });
+          tokensDiv.appendChild(ul);
+          container.appendChild(tokensDiv);
+          contentFound = true;
+          console.log(`  Echo Tokens displayed.`);
+        }
+
+        // Display Flow Blocks (including integral echoes)
+        if (unitData.data.flowBlocks && unitData.data.flowBlocks.length > 0) {
+          console.log(`  Found ${unitData.data.flowBlocks.length} flow blocks for ${unitData.titleCore}.`);
+          const flowBlocksDiv = document.createElement('div');
+          flowBlocksDiv.innerHTML = '<h3>Flow Blocks:</h3>';
+          unitData.data.flowBlocks.forEach(block => {
+              console.log(`    Processing flow block: "${block.title}"`);
+              const blockDiv = document.createElement('div');
+              blockDiv.classList.add('flow-block'); // Apply CSS class for styling
+
+              // Add the flow block's title first, regardless of its content type
+              const blockTitleElem = document.createElement('h4');
+              blockTitleElem.textContent = block.title;
+              blockDiv.appendChild(blockTitleElem);
+
+              // If the block has a glyphstream, treat it as an integral echo and display using displayDreamstateEcho
+              if (block.glyphstream && Array.isArray(block.glyphstream)) { // Check if glyphstream exists and is an array
+                console.log(`      Identified flow block as an integral echo (has glyphstream).`);
+                const tempEchoData = {
+                  titleCore: block.title,
+                  glyphstream: block.glyphstream,
+                  constructType: "INTEGRAL_ECHO_FLOW_BLOCK" // Add a new constructType for internal differentiation
+                };
+                const echoContentContainer = document.createElement('div');
+                blockDiv.appendChild(echoContentContainer);
+                displayDreamstateEcho(tempEchoData, echoContentContainer);
+                console.log(`      displayDreamstateEcho called for integral echo.`);
+              } else {
+                // If it's a regular flow block without a glyphstream, display its content as preformatted text if available
+                console.log(`      Found regular flow block without glyphstream or not an array.`);
+                // You might want to add logic here to display other block properties if they exist
+                // For now, if there's no glyphstream, it just shows the title.
+                // If there's other textual content you want to display, add it here.
+              }
+              flowBlocksDiv.appendChild(blockDiv);
+          });
+          container.appendChild(flowBlocksDiv);
+          contentFound = true;
+        }
+      }
+
+      if (!contentFound) {
+        container.innerHTML = `<p>No detailed data available for this Core Unit Integration.</p>`;
+      }
+    }
+
+    // NEW FUNCTION: To display Expansion Unit content in the modal
+    function displayExpansionUnit(unitData, container) {
+        console.log(`  displayExpansionUnit: Displaying content for ${unitData.titleCore}`);
+        const unitType = document.createElement('p');
+        unitType.innerHTML = `<strong>Construct Type:</strong> ${unitData.constructType}`;
+        container.appendChild(unitType);
+
+        if (unitData.description) {
+            const descriptionPara = document.createElement('p');
+            descriptionPara.innerHTML = `<br><strong>Description:</strong><br>${unitData.description}`;
+            container.appendChild(descriptionPara);
+        }
+
+        if (unitData.data) {
+            // Check for and display common data structures within Expansion Units
+            if (unitData.data.linkedConcepts && unitData.data.linkedConcepts.length > 0) {
+                const conceptsDiv = document.createElement('div');
+                conceptsDiv.innerHTML = '<br><strong>Linked Concepts:</strong>';
+                const ul = document.createElement('ul');
+                unitData.data.linkedConcepts.forEach(concept => {
+                    const li = document.createElement('li');
+                    li.textContent = concept;
+                    ul.appendChild(li);
+                });
+                conceptsDiv.appendChild(ul);
+                container.appendChild(conceptsDiv);
+            }
+            // Add more specific `unitData.data` handling here if your expansion units have other structured data
+            // For example:
+            if (unitData.data.notes) {
+                const notesPara = document.createElement('p');
+                notesPara.innerHTML = `<br><strong>Notes:</strong><br>${unitData.data.notes}`;
+                container.appendChild(notesPara);
+            }
+            // You can add more `if (unitData.data.someOtherProperty)` blocks as needed
+        } else {
+            const noData = document.createElement('p');
+            noData.innerText = "(No detailed data available for this Expansion Unit.)";
+            container.appendChild(noData);
+        }
+    }
+
+
+    // Search functionality
+    document.getElementById('search').addEventListener('input', function() {
+      const filter = this.value.toLowerCase();
+      const allEchoLists = document.querySelectorAll('.core-unit ul'); // Select all echo lists
+      allEchoLists.forEach(echoList => {
+          const listItems = echoList.querySelectorAll('li');
+          listItems.forEach(item => {
+              const text = item.textContent.toLowerCase();
+              item.style.display = text.includes(filter) ? '' : 'none';
+          });
+      });
+    });
+
+    // Cursor Shimmer JavaScript
+    document.addEventListener('mousemove', function(e) {
+      const shimmer = document.createElement('div');
+      shimmer.classList.add('cursor-shimmer');
+      document.body.appendChild(shimmer);
+
+      shimmer.style.left = `${e.clientX - shimmer.offsetWidth / 2}px`;
+      shimmer.style.top = `${e.clientY - shimmer.offsetHeight / 2}px`;
+
+      shimmer.addEventListener('animationend', () => {
+        shimmer.remove();
+      });
+    });
+
+    // Load data when the page content is fully loaded
+    document.addEventListener('DOMContentLoaded', loadClaireData);
+  </script>
+</body>
+</html>
